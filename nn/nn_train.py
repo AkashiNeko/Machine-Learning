@@ -42,10 +42,10 @@ for epoch in range(epochs):
 
 # save model
 torch.save(net.state_dict(), model_path)
-print('Save model', model_path)
+print('Save model to', model_path)
 
 # draw losses
 plt.plot(epoch_list, losses)
-plt.xlabel('Loss')
-plt.ylabel('epoch')
+plt.xlabel('epoch')
+plt.ylabel('Loss')
 plt.show()
