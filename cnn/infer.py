@@ -2,6 +2,7 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 import cv2
 import matplotlib.pyplot as plt
+import torch.nn.functional as F
 from my_conv_net import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -26,15 +27,16 @@ image_tensor = image_tensor.unsqueeze(0)  # 将数据增加一个维度，以符
 
 # 将数据传输到GPU上进行预测
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 image_tensor = image_tensor.to(device)
 with torch.no_grad():
     outputs = model(image_tensor)
-    # prob = nn.softmax(outputs).tolist()
-    # plt.plot(prob)
-    # plt.show()
     _, predicted = torch.max(outputs.data, 1)
-
-print("Predicted Number is:", predicted.item())
+    print("Predicted Number is:", predicted.item())
+    outputs = outputs.cpu().reshape(10)
+    prob = F.softmax(outputs, dim=0)
+    plt.bar(range(1, 11), prob)
+    plt.show()
 
 
 # # 数据预处理
