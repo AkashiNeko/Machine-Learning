@@ -5,10 +5,6 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 from my_conv_net import *
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model_path = 'cnn.pth'
-mnist_path = './data'
-
 # 数据预处理
 transform = transforms.Compose([
     transforms.ToTensor(),
@@ -25,10 +21,9 @@ train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=100
 # 定义模型、损失函数和优化器
 model = ConvNet().to(device)
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.Adam(model.parameters(), lr=learn_rate)
 
 # 训练模型
-epochs = 5
 for epoch in range(epochs):
     for i, (images, labels) in enumerate(train_loader):
         images = images.to(device)
