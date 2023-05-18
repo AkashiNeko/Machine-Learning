@@ -4,19 +4,23 @@ import cv2
 import matplotlib.pyplot as plt
 from my_conv_net import *
 
-
-def draw_bar(outputs, lable):
+def draw_bar(outputs, lable, image):
     prob = F.softmax(outputs.cpu().reshape(10), dim=0)
     prob = (prob * 100).tolist()
-    rects = plt.bar(range(10), prob)    
+    fig = plt.figure()
+    fig.set_size_inches(14, 6)
+    plt.subplot(1, 2, 1)
+    rects = plt.bar(range(10), prob)
     for rect in rects:
         height = rect.get_height()
-        plt.text(rect.get_x() + rect.get_width() / 2 - 0.5, height + 1, '{:.2f}%'.format(height))
+        plt.text(rect.get_x() + rect.get_width() / 2 - 0.4, height + 1, '{:.2f}'.format(height))
     plt.xticks(range(10))
     plt.yticks(range(0, 101, 10))
     plt.xlabel('digit (0 ~ 9)')
     plt.ylabel('probability (%)')
     plt.title('Predicted Number is: {}'.format(lable.item()))
+    plt.subplot(1, 2, 2)
+    plt.imshow(image)
     plt.show()
 
 def infer_single(device: str, image_path: str):
@@ -40,6 +44,7 @@ def infer_single(device: str, image_path: str):
         outputs = model(image_tensor)
         _, predicted = torch.max(outputs.data, 1)
         print("Predicted Number is:", predicted.item())
-        draw_bar(outputs, predicted)
+    draw_bar(outputs, predicted, image)
+
 
 infer_single('cpu', './data/digit.png')

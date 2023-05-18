@@ -4,67 +4,36 @@ import cv2
 import matplotlib.pyplot as plt
 from my_conv_net import *
 
+device = 'cpu'
 
-def infer_single(device: str, image_path: str):
-    model = ConvNet().to(device)
-    model.load_state_dict(torch.load(model_path))
-    model.eval()
+model = ConvNet()
+if device == 'cuda':
+    model = model.to(device)
+model.load_state_dict(torch.load(model_path))
 
-    # 加载图片并进行预处理
-    image = cv2.imread(image_path)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    image = cv2.resize(image, (28, 28))  # 将图片调整为MNIST数据集的大小
+# 预处理
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.1307,), (0.3081,))
+])
 
-    # plt.imshow(image)
-    # plt.show()
+# 加载MNIST数据集
+test_dataset = datasets.MNIST(root=mnist_path, train=False, transform=transform)
+test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=100, shuffle=False, pin_memory=True)
 
-    image_tensor = transforms.ToTensor()(image)
-    image_tensor = transforms.Normalize((0.1307,), (0.3081,))(image_tensor)
-    image_tensor = image_tensor.unsqueeze(0)  # 将数据增加一个维度，以符合模型的输入大小
-
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    image_tensor = image_tensor.to(device)
-    with torch.no_grad():
-        outputs = model(image_tensor)
+# 测试模型（10000张手写数字图片分为100组进行测试）
+with torch.no_grad():
+    correct, total, epoch = 0, 0, 0
+    for images, labels in test_loader:
+        if device == 'cuda':
+            images = images.to(device)
+            labels = labels.to(device)
+        outputs = model(images)
         _, predicted = torch.max(outputs.data, 1)
-        print("Predicted Number is:", predicted.item())
-        prob = F.softmax(outputs.cpu().reshape(10), dim=0)
-        plt.bar(range(10), prob)
-        plt.xlabel('digit')
-        plt.ylabel('probability')
-        plt.title('Predicted Number is: {}'.format(predicted.item()))
-        plt.show()
+        total += labels.size(0)
+        accuracy = (predicted == labels).sum().item()
+        epoch += 1
+        print('[{}]\taccuracy: {} %'.format(epoch, accuracy))
+        correct += accuracy
 
-infer_single('cpu', './data/digit.png')
-
-# # 数据预处理
-# transform = transforms.Compose([
-#     transforms.ToTensor(),
-#     transforms.Normalize((0.1307,), (0.3081,))
-# ])
-
-# # 加载MNIST数据集
-# test_dataset = datasets.MNIST(root=mnist_path, train=False, transform=transform)
-
-# # 定义数据加载器
-# test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=100, shuffle=False, pin_memory=True)
-
-# # 测试模型
-# with torch.no_grad():
-#     correct = 0
-#     total = 0
-#     i = 0
-#     for images, labels in test_loader:
-#         images = images.to(device)
-#         labels = labels.to(device)
-
-#         outputs = model(images)
-#         _, predicted = torch.max(outputs.data, 1)
-#         total += labels.size(0)
-#         true_count = (predicted == labels).sum().item()
-#         i += 1
-#         print('[{}]\ttrue count: [{}/{}]'.format(i, true_count, labels.size(0)))
-#         correct += true_count
-
-#     print('Accuracy of the model on the 10000 test images: {} %'.format(100 * correct / total))
+    print('Accuracy of the model on the 10000 test images: {} %'.format(100 * correct / total))
