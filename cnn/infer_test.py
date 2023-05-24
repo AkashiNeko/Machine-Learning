@@ -11,7 +11,6 @@ if device == 'cuda':
     model = model.to(device)
 model.load_state_dict(torch.load(model_path))
 
-# 预处理
 transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.1307,), (0.3081,))
@@ -21,7 +20,7 @@ transform = transforms.Compose([
 test_dataset = datasets.MNIST(root=mnist_path, train=False, transform=transform)
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=100, shuffle=False, pin_memory=True)
 
-# 测试模型（10000张手写数字图片分为100组进行测试）
+
 with torch.no_grad():
     correct, total, epoch = 0, 0, 0
     for images, labels in test_loader:
